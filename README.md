@@ -19,12 +19,19 @@
 
 ## 설치 — Claude Code (플러그인)
 
+이 리포는 자기 자신의 마켓플레이스를 겸합니다:
+
 ```bash
-/plugin install <marketplace 등록 후 확정>
+/plugin marketplace add roundflip/mood-studio-plugin
+/plugin install mood-studio@mood-studio
 ```
 
 플러그인이 MCP 서버 연결과 스킬을 함께 설치합니다. 첫 도구 사용 시 브라우저가
 열리며 mood 로그인·권한 동의를 요청합니다 — mood 계정(가입 회원)이 필요합니다.
+
+> 리포가 private 인 동안은 roundflip 에 대한 git 인증(SSH)이 있는 사용자만
+> 추가할 수 있습니다. 업데이트 배포 시에는 `plugin.json`·`marketplace.json` 의
+> `version` 을 함께 올려야 사용자에게 자동 업데이트가 전달됩니다.
 
 ## 설치 — 수동 MCP 등록 (Claude Code · Cursor 등)
 
