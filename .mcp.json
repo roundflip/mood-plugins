@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mood-studio": {
+      "type": "http",
+      "url": "https://api.mood-by.ai/mcp"
+    }
+  }
+}
