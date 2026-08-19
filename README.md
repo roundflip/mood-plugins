@@ -8,6 +8,15 @@
   게시·태그·미디어 업로드 도구 11종
 - **스킬 3종**: 저작 워크플로우 / 미디어 업로드 / 콘텐츠 작법
 
+두 가지 플러그인 형식을 한 리포에 담고 있습니다:
+
+| 형식 | 파일 | 대상 클라이언트 |
+|---|---|---|
+| [Agent Plugins 1.0.0](https://agent-plugins.org) 표준 | 루트 `plugin.json` + `mcp.json` | Codex, Cursor, GitHub Copilot/VS Code 등 표준 채택 클라이언트 |
+| Claude Code 네이티브 | `.claude-plugin/plugin.json` + `.mcp.json` | Claude Code |
+
+`skills/`(Agent Skills 형식)는 양쪽이 공유합니다.
+
 ## 설치 — Claude Code (플러그인)
 
 ```bash
