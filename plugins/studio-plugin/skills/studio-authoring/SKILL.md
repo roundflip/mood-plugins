@@ -20,7 +20,9 @@ create_world 로 빈 월드를 만드는 것도 포함이다. 탐색·설계 단
 콜백 페이지가 연결 오류로 뜨면 사용자에게 주소창의 URL 전체를 받아
 `complete_authentication` 에 그대로 넘긴다. 인증은 언제 일어나도 되지만,
 브레인스토밍 도중 대화를 끊지 않도록 **등록 직전(4단계 진입 시)** 에
-확인하는 것을 권장한다.
+확인하는 것을 권장한다. 인증 완료 직후에는 도구 목록 갱신이 한 턴 늦을 수
+있다 — 저작 도구가 아직 안 보여도 실패로 판단하지 말고 한 턴 뒤에 다시
+확인한다.
 
 ## 프로세스
 
@@ -85,6 +87,38 @@ validate_world_draft(world_id)            → 남은 위반 정리해 보고
 등록이 끝나면 결과(작품 id·저장된 구성·validate 위반 목록)를 보고하고, 다음
 단계를 안내한다 — 커버 이미지는 studio-media 스킬, 게시는 아래 게이트.
 
+## 드래프트 스키마 — save_world_draft 의 `draft` 형태
+
+`get_world_draft` 응답의 draft 를 기반으로 수정해 보낸다. **저장은 전체 스냅샷
+교체다** — 일부 섹션만 보내면 나머지(빠뜨린 캐릭터·시나리오 등)가 삭제된다.
+최상위 배열 4종(places·events·characters·scenarios)은 비어 있어도 `[]` 로 보낸다.
+
+```
+info: { title, description, core, style,
+        rules: [{ name, content }],          # 문자열 배열 아님 — name·content 쌍
+        endingConditions: [string],
+        tagIds: [string], coverMediaId?,     # id 는 전부 JSON 문자열
+        targetGender, visibility }           # enum 문자열, visibility 는 기본값 없음
+places: [{ clientRef|id, name, description }]
+events: [{ clientRef|id, name, trigger, progression,
+           placeId|placeClientRef? }]        # 장소는 선택
+characters: [{ clientRef|id, name, description, personality,
+               exampleLine, relationship, profileMediaId?,
+               media: [{ clientRef|id, mediaId, description,
+                         unlockRequired }] }]
+               # type 은 서버가 정한다(PLAYER/NPC) — 보내는 필드가 아님
+scenarios: [{ clientRef|id, title, description,
+              items: [ { narration: { content } }
+                     | { speech: { characterClientRef|characterId, content } }
+                     | { effect: { style } }
+                     | { media: { mediaId } } ],
+              choices: [string] }]           # 최대 3개 · 각 60자
+```
+
+대사·나레이션 본문 필드는 `text` 가 아니라 **`content`** 다. 응답에만 있는
+읽기 전용 필드(`coverMedia`·`tags`·`media[].media`·`profileMedia`·캐릭터
+`type`)는 저장 요청에 넣어도 무시된다 — 규약 7 참조.
+
 ## 저장 규약 — 반드시 지킬 것
 
 1. **id 는 문자열이다.** 모든 id(`world_id`, 엔티티 id, `cover_media_id`,
@@ -100,6 +134,8 @@ validate_world_draft(world_id)            → 남은 위반 정리해 보고
    값을 다음 저장에 그대로 보낸다. `REVISION_MISMATCH`(ABORTED) 가 나면 다른
    곳에서 먼저 저장된 것 — `get_world_draft` 로 재조회한 뒤 편집을 다시 얹는다.
    저장 요청을 병렬로 보내지 말 것 — 반드시 앞 저장의 응답을 받고 다음을 보낸다.
+   응답에 `revision` 필드가 없으면 값이 **0** 인 것이다(0 은 JSON 에서 생략된다)
+   — 첫 저장에는 0 을 보낸다.
 5. **저장 성공이 불확실하면**(타임아웃 등) 같은 payload 를 재전송하지 말고
    `get_world_draft` 로 실제 상태를 확인한다 — `clientRef` 는 요청-응답 사이의
    상관 키일 뿐 멱등 키가 아니라, 재전송하면 엔티티가 중복 생성될 수 있다.
@@ -111,11 +147,17 @@ validate_world_draft(world_id)            → 남은 위반 정리해 보고
 8. **저장은 관대하고, 게시는 엄격하다.** 빈 값·미완성은 저장이 받아준다. 단
    **존재하지 않는 대상을 가리키는 참조**(없는 장소 id, 남의 미디어 id 등)는
    저장에서도 거부된다.
+9. **쓰기 도구는 한 응답에 하나만 호출한다.** 같은 모양의 짧은 쓰기 호출을
+   한 응답에 병렬로 나열하면 동일 호출이 통제 없이 반복되는 사고가 실제로
+   있었다(2026-08-20, create_tag 135회 중복 — 멱등이라 무사했지만
+   save_world_draft 였다면 엔티티 중복 생성이다). 읽기는 병렬로 해도 되지만,
+   쓰기는 앞 호출의 응답을 확인하고 다음을 보낸다.
 
 ## 태그
 
-- `list_tags(query)` 로 기존 태그를 먼저 검색하고, 없으면 `create_tag` 로
-  만든다. **멱등**이라 중복 걱정 없이 바로 생성해도 된다.
+- `list_tags(query)` 로 기존 태그를 먼저 확인하고, 없는 것만 `create_tag` 로
+  만든다. **멱등**이라 중복 걱정은 없지만, 규약 9에 따라 **한 응답에 하나씩
+  순차로** 호출한다 — 여러 개를 병렬로 나열하지 않는다.
 - 태그 이름은 서버가 trim + 소문자로 정규화한다 — "Romance" 로 만들어도
   `"romance"` 로 저장·응답된다.
 - 월드에 붙이는 건 `draft.info.tagIds` 로 — **전체 교체**라 기존 태그를

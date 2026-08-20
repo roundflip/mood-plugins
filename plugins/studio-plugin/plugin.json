@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "mood-studio",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "mood(mood-by.ai) 스튜디오 AI 저작 플러그인 — MCP 도구로 세계관을 만들고 편집·게시합니다",
   "author": {
     "name": "RoundFlip"
