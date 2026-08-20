@@ -9,7 +9,7 @@
       "name": "mood-studio",
       "source": "./plugins/studio-plugin",
       "description": "mood 스튜디오 AI 저작 — MCP 도구로 세계관을 만들고 편집·게시합니다",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }
