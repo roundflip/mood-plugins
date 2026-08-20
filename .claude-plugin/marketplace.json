@@ -1,10 +1,11 @@
 {
-  "name": "mood-studio",
+  "name": "mood-plugins",
   "owner": { "name": "RoundFlip", "url": "https://www.mood-by.ai" },
+  "metadata": { "pluginRoot": "./plugins" },
   "plugins": [
     {
       "name": "mood-studio",
-      "source": "./",
+      "source": "studio-plugin",
       "description": "mood 스튜디오 AI 저작 — MCP 도구로 세계관을 만들고 편집·게시합니다",
       "version": "0.1.0"
     }
