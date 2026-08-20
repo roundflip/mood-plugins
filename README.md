@@ -9,8 +9,6 @@
 /plugin install mood-studio@mood-plugins
 ```
 
-> 리포가 private 인 동안은 roundflip 에 대한 git 인증(SSH)이 있는 사용자만
-> 추가할 수 있습니다.
 
 ## 플러그인 목록
 
